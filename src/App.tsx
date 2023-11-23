@@ -176,7 +176,7 @@ function Game({ socket }: { socket: Socket | null }) {
             paddingBottom: 16,
           }}
         >
-          Total Whacks: {gameState.totalWhacks}, JR Pop Time: {gameState.speedMs} ms
+          Total Whacks: {gameState.totalWhacks}, Johnny Pop Time: {gameState.speedMs} ms
         </div>
         {gameState.holes.map((row, ridx) => (
           <div key={`row${ridx}`} style={{ display: "flex" }}>
