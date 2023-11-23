@@ -37,7 +37,7 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected');
+  console.log('a user connected: ', socket.id);
   games.set(socket.id, {
     holes: Array(NUM_ROWS).fill(Array(NUM_COLS).fill("empty")),
     score: 0,
@@ -77,7 +77,6 @@ io.on('connection', (socket) => {
   });
 
   socket.on('whack', (data) => {
-    console.log(socket.id, data);
     const game = games.get(socket.id);
     if (game && game.state === "playing") {
       const { row, col } = data;
