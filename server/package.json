@@ -1,0 +1,11 @@
+{
+  "name": "socket-io-server",
+  "version": "0.0.1",
+  "description": "socket-io-server for whack-a-john",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2",
+    "ts-node": "^10.9.1"
+  }
+}
