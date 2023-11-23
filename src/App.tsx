@@ -6,12 +6,6 @@ import johnImg from "./assets/john.png";
 import nyxImg from "./assets/nyx.png";
 import "./App.css";
 
-const NUM_ROWS = 3;
-const NUM_COLS = 3;
-const START_SPEED_MS = 2000;
-const MIN_SPEED_MS = 600;
-const JOHN_CHANCE = 0.9; // chance of John appearing vs Nyx
-
 type HoleState = "empty" | "john" | "nyx";
 
 type GameState = {
@@ -58,7 +52,8 @@ function App() {
   const [playing, setPlaying] = useState<boolean>(false);
 
   useEffect(() => {
-    const sio = io("http://localhost:3001");
+    //const sio = io("http://localhost:3001");
+    const sio = io("https://whack-a-john-production.up.railway.app");
     setSocket(sio);
     socket?.on("connect", () => {
       console.log("Connected to socket");
