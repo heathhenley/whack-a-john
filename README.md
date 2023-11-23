@@ -6,4 +6,3 @@
   - Form to make a new multiplayer game
   - Form to join an existing multiplayer game (or store in url)
   - Use websocket rooms to separate games
-"# whack-a-john" 

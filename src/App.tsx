@@ -84,9 +84,9 @@ function App() {
         />
       )}
       {socket ? (
-        <div> Connected to socket </div>
+        <div> Connected to web socket </div>
       ) : (
-        <div> Not connected to socket </div>
+        <div> Not connected to web socket </div>
       )}
     </div>
   );
