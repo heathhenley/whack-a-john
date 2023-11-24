@@ -140,7 +140,7 @@ function App() {
     <div className="App">
       <Toaster richColors />
       {playing ? <Game socket={socket} /> : <StartScreen joinGame={joinGame} />}
-      <div>Total Connected: {connectedCount}</div>
+      <div>Total Online: {connectedCount}</div>
     </div>
   );
 }
@@ -337,7 +337,7 @@ function Game({ socket }: { socket: Socket | null }) {
       ) : null}
       {playerList && playerList.length > 0 ? (
         <div>
-          <h2>Players</h2>
+          <h2>Players in room: {playerList.length}</h2>
           {playerList.map((player) => (
             <div key={player.name}>
               {player.name}, {player.playerState}, {player.score}
