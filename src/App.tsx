@@ -3,8 +3,8 @@ import io from "socket.io-client";
 import { Socket } from "socket.io-client";
 import { Toaster, toast } from "sonner";
 import holeImg from "./assets/hole.png";
-import johnImg from "./assets/john.png";
-import nyxImg from "./assets/nyx.png";
+import johnImg from "./assets/john_small.png";
+import nyxImg from "./assets/nyx_small.png";
 import "./App.css";
 
 type HoleState = "empty" | "john" | "nyx";
@@ -65,15 +65,8 @@ function App() {
     if (!sio) {
       return;
     }
-    sio.on("connect", () => {
-      console.log("Connected to socket");
-    });
-    sio.on("disconnect", () => {
-      console.log("Disconnected from socket");
-    });
     sio.on("count", (count: number) => {
       setConnectedCount(count);
-      console.log("Connected count: ", count);
     });
     sio.on(
       "notification",
