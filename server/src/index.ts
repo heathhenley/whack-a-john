@@ -33,7 +33,6 @@ type Game = {
   state: "paused" | "playing" | "over";
   speedMs: number;
   lastPopTime: number | null;
-  statusMessage: string | null; // msg for all players in game
   gameType: "solo" | "multiplayer";
 };
 
@@ -41,7 +40,6 @@ type Player = {
   id: string;
   name: string;
   score: number;
-  statusMessage: string | null; // msg for just this player
   totalWhacks: number;
   playerState: "notReady" | "playing" | "ready" | "lost" | "won";
 };
@@ -61,7 +59,6 @@ const newGame = (gameType: "solo" | "multiplayer"): Game => {
     state: "paused",
     speedMs: START_SPEED_MS,
     lastPopTime: null,
-    statusMessage: null,
     gameType: gameType,
   };
 };
@@ -76,9 +73,15 @@ const handleWhack = (
   const { row, col } = data;
   if (game.holes[row][col] === "john") {
     player.score += 1;
-    player.statusMessage = "You whacked John!";
+    io.to(playerId).emit("notification", {
+      message: "You whacked John! +1 point!",
+      type: "success",
+    });
     if (game.gameType === "multiplayer") {
-      game.statusMessage = `${player.name} whacked John!`;
+      io.to(room).emit("notification", {
+        message: `${player.name} whacked John!`,
+        type: "success",
+      });
     }
     if (game.speedMs > MIN_SPEED_MS) {
       game.speedMs -= 50;
@@ -86,12 +89,21 @@ const handleWhack = (
   } else if (game.holes[row][col] === "nyx") {
     game.state = "over";
     player.playerState = "lost";
-    player.statusMessage = "You monster...you whacked Nyx! YOU LOSE!";
+    io.to(playerId).emit("notification", {
+      message: "You whacked Nyx! YOU LOSE!",
+      type: "error",
+    });
     if (game.gameType === "multiplayer") {
-      game.statusMessage = `${player.name} whacked Nyx! THEY'RE OUT!`;
+      io.to(room).emit("notification", {
+        message: `${player.name} whacked Nyx! THEY'RE OUT!`,
+        type: "error",
+      });
     }
   } else {
-    player.statusMessage = "You missed!";
+    io.to(playerId).emit("notification", {
+      message: "You missed!",
+      type: "warning",
+    });
     player.score -= 1;
   }
 };
@@ -120,7 +132,7 @@ const advanceGame = (game: Game) => {
 };
 
 // runs each tick to update game status
-const updateGameStatus = (game: Game) => {
+const updateGameStatus = (room: string, game: Game) => {
   // check if all players are ready and start game if not already started
   const allPlayersReady = game.players.every((p) => {
     const player = players.get(p);
@@ -144,7 +156,9 @@ const updateGameStatus = (game: Game) => {
     });
     if (allPlayersLost) {
       game.state = "over";
-      game.statusMessage = "All players are out! Game over!";
+      io.to(room).emit("notification", {
+        message: "All players are out! Game over!"
+      });
     }
 
     // if any player has negative score, they lose
@@ -152,7 +166,14 @@ const updateGameStatus = (game: Game) => {
       const player = players.get(p);
       if (player.score >= 0 || player.playerState !== "playing") return;
       player.playerState = "lost";
-      player.statusMessage = "You have a negative score! YOU LOSE!";
+      io.to(p).emit("notification", {
+        message: "You have a negative score! YOU LOSE!",
+        type: "error",
+      });
+      io.to(room).emit("notification", {
+        message: `${player.name} has a negative score! THEY'RE OUT!`,
+        type: "error",
+      });
     });
 
     // if multiplayer, check if only one player left
@@ -165,7 +186,14 @@ const updateGameStatus = (game: Game) => {
         game.state = "over";
         const player = players.get(playersStillIn[0]);
         player.playerState = "won";
-        game.statusMessage = `${player.name} is the last one standing!`;
+        io.to(playersStillIn[0]).emit("notification", {
+          message: "You are the last one standing! YOU WIN!",
+          type: "success",
+        });
+        io.to(room).emit("notification", {
+          message: `${player.name} is the last one standing!`,
+          type: "success",
+        });
       }
     }
   }
@@ -180,7 +208,6 @@ io.on("connection", (socket) => {
       id: socket.id,
       name: "Anonymous",
       score: 0,
-      statusMessage: null,
       totalWhacks: 0,
       playerState: "notReady",
     });
@@ -223,11 +250,11 @@ io.on("connection", (socket) => {
 
   // ready up for multiplayer
   socket.on("ready", () => {
-    console.log("ready");
     const player = players.get(socket.id);
     if (player) {
       player.playerState = "ready";
     }
+    io.to(socket.id).emit("playerState", player);
   });
 
   // need to remove player from game if they leave
@@ -266,7 +293,7 @@ setInterval(() => {
       continue;
     }
     // checks for end game conditions, etc, start game if all players ready
-    updateGameStatus(game);
+    updateGameStatus(id, game);
     advanceGame(game);
     io.to(id).emit("gameState", game);
     io.to(id).emit("playerList", game.players.map((p) => players.get(p)));

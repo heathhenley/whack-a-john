@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import io from "socket.io-client";
 import { Socket } from "socket.io-client";
+import { Toaster, toast } from "sonner";
 import holeImg from "./assets/hole.png";
 import johnImg from "./assets/john.png";
 import nyxImg from "./assets/nyx.png";
@@ -12,14 +13,12 @@ type GameState = {
   holes: HoleState[][];
   score: number;
   speedMs: number;
-  statusMessage: string | null;
   totalWhacks: number;
   state: "playing" | "lost";
 };
 
 type PlayerState = {
   totalWhacks: number;
-  statusMessage: string | null;
   playerState: "notReady" | "playing" | "ready" | "lost" | "won";
   score: number;
   name: string;
@@ -58,10 +57,11 @@ const Hole = ({
 function App() {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [playing, setPlaying] = useState<boolean>(false);
-  const [connectedCount , setConnectedCount] = useState<number>(0);
+  const [connectedCount, setConnectedCount] = useState<number>(0);
 
   useEffect(() => {
     const sio = io("https://whack-a-john-production.up.railway.app");
+    //const sio = io("http://localhost:3001");
     if (!sio) {
       return;
     }
@@ -75,6 +75,36 @@ function App() {
       setConnectedCount(count);
       console.log("Connected count: ", count);
     });
+    sio.on(
+      "notification",
+      ({
+        message,
+        type,
+      }: {
+        message: string;
+        type: "error" | "success" | "warning";
+      }) => {
+        console.log("Notification: ", message, type);
+        if (type === "error") {
+          toast.error(message, {
+            position: "bottom-right",
+            duration: 3000,
+          });
+        }
+        if (type === "success") {
+          toast.success(message, {
+            position: "bottom-right",
+            duration: 1000,
+          });
+        }
+        if (type === "warning") {
+          toast.warning(message, {
+            position: "bottom-right",
+            duration: 1000,
+          });
+        }
+      }
+    );
     setSocket(sio);
     return () => {
       sio?.close();
@@ -115,25 +145,14 @@ function App() {
 
   return (
     <div className="App">
-      {playing ? (
-        <Game socket={socket} />
-      ) : (
-        <StartScreen
-          joinGame={joinGame}
-        />
-      )}
-      <div>
-        Total Connected: {connectedCount}
-      </div>
+      <Toaster richColors />
+      {playing ? <Game socket={socket} /> : <StartScreen joinGame={joinGame} />}
+      <div>Total Connected: {connectedCount}</div>
     </div>
   );
 }
 
-function StartScreen({
-  joinGame,
-}: {
-  joinGame: (e: any) => void;
-}) {
+function StartScreen({ joinGame }: { joinGame: (e: any) => void }) {
   const [selectedGameType, setSelectedGameType] = useState<string>("solo");
   return (
     <section
@@ -147,17 +166,20 @@ function StartScreen({
         gap: 6,
       }}
     >
-      <h1 style={{
-        fontSize: 48,
-        fontWeight: "bold",
-        textAlign: "center",
-        padding: 0,
-        margin: 0,
-      }}>Whack-a-John</h1>
+      <h1
+        style={{
+          fontSize: 48,
+          fontWeight: "bold",
+          textAlign: "center",
+          padding: 0,
+          margin: 0,
+        }}
+      >
+        Whack-a-John
+      </h1>
       <div>
         <h2>Objective</h2>
         Click on the holes to whack John. Don't whack NYX!
-        
         <h2>Rules</h2>
         The rules are simple:
         <ol>
@@ -166,8 +188,9 @@ function StartScreen({
           <li>Don't whack NYX, you will lose!</li>
           <li>If you score is negative, you will lose!</li>
         </ol>
-        Johnny is quite nimble, so he will move around the board. You will have to be quick to whack him! He also gets faster as the game goes on, so
-        be careful!
+        Johnny is quite nimble, so he will move around the board. You will have
+        to be quick to whack him! He also gets faster as the game goes on, so be
+        careful!
       </div>
       <div
         style={{
@@ -196,8 +219,18 @@ function StartScreen({
           </select>
           {selectedGameType === "multiplayer" ? (
             <div className="inputGroup">
-              <input required name="playerName" type="text" placeholder="Your Name" />
-              <input required name="roomName" type="text" placeholder="Room Name" />
+              <input
+                required
+                name="playerName"
+                type="text"
+                placeholder="Your Name"
+              />
+              <input
+                required
+                name="roomName"
+                type="text"
+                placeholder="Room Name"
+              />
             </div>
           ) : null}
           <button
@@ -291,32 +324,6 @@ function Game({ socket }: { socket: Socket | null }) {
           </div>
         ))}
       </div>
-      {gameState.statusMessage && (
-        <div
-          style={{
-            fontSize: 18,
-            fontWeight: "bold",
-            textAlign: "center",
-            padding: 24,
-            height: 32,
-          }}
-        >
-          Game Alert: {gameState.statusMessage}
-        </div>
-      )}
-      {playerState.statusMessage && (
-        <div
-          style={{
-            fontSize: 18,
-            fontWeight: "bold",
-            textAlign: "center",
-            padding: 24,
-            height: 32,
-          }}
-        >
-          Player Alert: {playerState.statusMessage}
-        </div>
-      )}
       {playerState.playerState === "notReady" ? (
         <div
           style={{
