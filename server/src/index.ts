@@ -185,6 +185,8 @@ io.on("connection", (socket) => {
       playerState: "notReady",
     });
   }
+  io.emit("count", players.size);
+  console.log("players: ", players.size);
 
   // Joining a room:
   socket.on(
@@ -239,6 +241,7 @@ io.on("connection", (socket) => {
         game.players = game.players.filter((p) => p !== socket.id);
       }
     }
+    io.emit("count", players.size);
   });
 
   // handle incoming whacks from clients
