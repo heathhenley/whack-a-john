@@ -61,8 +61,7 @@ function App() {
   const [connectedCount , setConnectedCount] = useState<number>(0);
 
   useEffect(() => {
-    const sio = io("http://localhost:3001");
-    //const sio = io("https://whack-a-john-production.up.railway.app");
+    const sio = io("https://whack-a-john-production.up.railway.app");
     if (!sio) {
       return;
     }
