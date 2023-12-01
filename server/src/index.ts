@@ -93,16 +93,10 @@ const handleWhack = (
   } else if (game.holes[row][col] === "nyx") {
     game.state = "over";
     player.playerState = "lost";
-    io.to(playerId).emit("notification", {
-      message: "You whacked Nyx! YOU LOSE!",
+    io.to(room).emit("notification", {
+      message: `${player.name} whacked Nyx! THEY'RE OUT!`,
       type: "error",
     });
-    if (game.gameType === "multiplayer") {
-      io.to(room).emit("notification", {
-        message: `${player.name} whacked Nyx! THEY'RE OUT!`,
-        type: "error",
-      });
-    }
   } else {
     io.to(playerId).emit("notification", {
       message: "You missed!",
