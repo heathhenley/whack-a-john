@@ -24,8 +24,8 @@ type GameStateClient = {
 const NUM_ROWS = 3;
 const NUM_COLS = 3;
 const START_SPEED_MS = 2000;
-const MIN_SPEED_MS = 600;
-const JOHN_CHANCE = 0.9; // chance of John appearing vs Nyx
+const MIN_SPEED_MS = 1000;
+const JOHN_CHANCE = 0.7; // chance of John appearing vs Nyx
 
 type Game = {
   holes: HoleState[][];
@@ -54,7 +54,9 @@ server.listen(port, () => {
 
 const newGame = (gameType: "solo" | "multiplayer"): Game => {
   return {
-    holes: Array(NUM_ROWS).fill("empty").map(() => Array(NUM_COLS).fill("empty")),  
+    holes: Array(NUM_ROWS)
+      .fill("empty")
+      .map(() => Array(NUM_COLS).fill("empty")),
     players: [],
     state: "paused",
     speedMs: START_SPEED_MS,
@@ -73,10 +75,12 @@ const handleWhack = (
   const { row, col } = data;
   if (game.holes[row][col] === "john") {
     player.score += 1;
-    io.to(playerId).emit("notification", {
-      message: "You whacked John! +1 point!",
-      type: "success",
-    });
+    if (game.gameType === "solo") {
+      io.to(playerId).emit("notification", {
+        message: "You whacked John! +1 point!",
+        type: "success",
+      });
+    }
     if (game.gameType === "multiplayer") {
       io.to(room).emit("notification", {
         message: `${player.name} whacked John!`,
@@ -157,19 +161,15 @@ const updateGameStatus = (room: string, game: Game) => {
     if (allPlayersLost) {
       game.state = "over";
       io.to(room).emit("notification", {
-        message: "All players are out! Game over!"
+        message: "All players are out! Game over!",
       });
     }
 
     // if any player has negative score, they lose
     game.players.forEach((p) => {
       const player = players.get(p);
-      if (player.score >= 0 || player.playerState !== "playing") return;
+      if (player.score >= -5 || player.playerState !== "playing") return;
       player.playerState = "lost";
-      io.to(p).emit("notification", {
-        message: "You have a negative score! YOU LOSE!",
-        type: "error",
-      });
       io.to(room).emit("notification", {
         message: `${player.name} has a negative score! THEY'RE OUT!`,
         type: "error",
@@ -186,10 +186,6 @@ const updateGameStatus = (room: string, game: Game) => {
         game.state = "over";
         const player = players.get(playersStillIn[0]);
         player.playerState = "won";
-        io.to(playersStillIn[0]).emit("notification", {
-          message: "You are the last one standing! YOU WIN!",
-          type: "success",
-        });
         io.to(room).emit("notification", {
           message: `${player.name} is the last one standing!`,
           type: "success",
@@ -296,11 +292,13 @@ setInterval(() => {
     updateGameStatus(id, game);
     advanceGame(game);
     io.to(id).emit("gameState", game);
-    io.to(id).emit("playerList", game.players.map((p) => players.get(p)));
+    io.to(id).emit(
+      "playerList",
+      game.players.map((p) => players.get(p))
+    );
     for (const p in game.players) {
       const player = players.get(p);
       io.to(p).emit("playerState", player);
     }
   }
-  
-}, 1000.0 / 10.0);
+}, 1000.0 / 30.0);

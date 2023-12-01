@@ -179,7 +179,7 @@ function StartScreen({ joinGame }: { joinGame: (e: any) => void }) {
           <li>Get one point for each time you Whack John</li>
           <li>Lose a point if you miss</li>
           <li>Don't whack NYX, you will lose!</li>
-          <li>If you score is negative, you will lose!</li>
+          <li>If your score is negative 5 (-5), you will lose!</li>
         </ol>
         Johnny is quite nimble, so he will move around the board. You will have
         to be quick to whack him! He also gets faster as the game goes on, so be
