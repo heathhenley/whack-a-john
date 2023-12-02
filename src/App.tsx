@@ -300,7 +300,7 @@ function Game({ socket }: { socket: Socket | null }) {
             paddingBottom: 16,
           }}
         >
-          Total Whacks: {playerState.totalWhacks}, Johnny Pop Time:{" "}
+          Current Johnny Pop Time:{" "}
           {gameState.speedMs} ms
         </div>
         {gameState.holes.map((row, ridx) => (
@@ -340,7 +340,7 @@ function Game({ socket }: { socket: Socket | null }) {
           <h2>Players in room: {playerList.length}</h2>
           {playerList.map((player) => (
             <div key={player.name}>
-              {player.name}, {player.playerState}, {player.score}
+              Name: {player.name}, Status: {player.playerState}, Score: {player.score}
             </div>
           ))}
         </div>
